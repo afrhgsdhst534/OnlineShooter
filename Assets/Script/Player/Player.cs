@@ -10,6 +10,10 @@ public abstract class Player : NetworkBehaviour
         playerManager = PlayerManager.instance;
         playerManager.AddPlayer(gameObject);
     }
+    public override void OnStartLocalPlayer()
+    {
+        base.OnStartLocalPlayer();
+    }
     private void OnDestroy()
     {
         if (isServer && PlayerManager.instance != null)

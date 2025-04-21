@@ -6,6 +6,7 @@ public class EnemysSpawner : NetworkBehaviour
     public float spawnInterval = 5f;
     public Transform[] spawnPoints;
     private float timer;
+    public bool active;
     void Update()
     {
         if (!isServer) return;
@@ -17,10 +18,14 @@ public class EnemysSpawner : NetworkBehaviour
             timer = 0f;
         }
     }
+    public void Active()
+    {
+        active = true;
+    }
     [Server]
     void SpawnEnemy()
     {
-        if (enemyPrefab == null || spawnPoints.Length == 0)
+        if (enemyPrefab == null || spawnPoints.Length == 0||!active)
             return;
         Transform spawnPoint = spawnPoints[Random.Range(0, spawnPoints.Length)];
         GameObject enemy = Instantiate(enemyPrefab, spawnPoint.position, spawnPoint.rotation);

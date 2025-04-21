@@ -57,4 +57,9 @@ public class RoomManager : NetworkBehaviour
             conn.Disconnect();
         }
     }
+    public void Disconext()
+    {
+        NetworkManager.singleton.StopHost();
+
+    }
 }

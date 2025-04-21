@@ -18,6 +18,7 @@ public class WeaponHolder : NetworkBehaviour
     {
         while (true)
         {
+            if (weapon == null) return;
             weapon.Attack();
             await Task.Delay(weapon.reloadTime);
         }

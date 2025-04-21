@@ -26,7 +26,7 @@ Transform:
   m_GameObject: {fileID: 8789115151052631782}
   serializedVersion: 2
   m_LocalRotation: {x: 0, y: 0, z: 0, w: 1}
-  m_LocalPosition: {x: 45.821346, y: 20, z: 22.818687}
+  m_LocalPosition: {x: 0, y: 0, z: 29}
   m_LocalScale: {x: 1, y: 1, z: 1}
   m_ConstrainProportionsScale: 0
   m_Children: []
@@ -44,10 +44,7 @@ MonoBehaviour:
   m_Script: {fileID: 11500000, guid: 1041e09940b8f8d4292a9f0a32aa8b42, type: 3}
   m_Name: 
   m_EditorClassIdentifier: 
-  syncDirection: 0
-  syncMode: 0
-  syncInterval: 0
   reloadTime: 1000
-  force: 1
+  force: 99
   speed: 500
   projectilePrefab: {fileID: 4388944105269255171, guid: 36ffb15488ebb384c87d3bf270d61f5a, type: 3}

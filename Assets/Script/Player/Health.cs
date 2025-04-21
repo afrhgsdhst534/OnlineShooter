@@ -1,6 +1,8 @@
-using Mirror;
+﻿using Mirror;
 public class Health : NetworkBehaviour
 {
+    public int expReward = 10; // ← Сколько EXP даёт враг при смерти
+
     private HealthBar hb;
      public int maxHealth;
     [SyncVar(hook = nameof(OnHealthChanged))]
@@ -34,6 +36,10 @@ public class Health : NetworkBehaviour
     [Server]
     private void Die()
     {
+        if (ExpManager.Instance != null)
+        {
+            ExpManager.Instance.AddXP(expReward);
+        }
         NetworkServer.Destroy(gameObject);
     }
 }
