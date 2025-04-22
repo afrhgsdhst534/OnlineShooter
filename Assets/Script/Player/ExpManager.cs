@@ -11,32 +11,36 @@ public class ExpManager : NetworkBehaviour
     public List<string> allUpgrades = new List<string> { "hp", "attack", "attackSpeed" };
     public GameObject upgradesUI;
     public Slider xpSlider;
+    public Text hostChoiceText;
+
     public int baseMaxXP = 100;
 
     [SyncVar(hook = nameof(OnXPChanged))] public int currentXP;
     [SyncVar(hook = nameof(OnXPChanged))] public int maxXP;
+
+    [SyncVar(hook = nameof(OnHostUpgradeChanged))] public string hostSelectedUpgrade;
+
     [SyncVar] private bool isPaused = false;
 
     private List<string> currentUpgrades;
-    private Dictionary<uint, string> playerChoices = new();
+    private Dictionary<uint, string> selectedUpgrades = new();
 
-    void Awake() => Instance = this;
+    private double countdownStartTime;
+    private float countdownDuration = 10f;
+    private bool countdownActive = false;
+
+    private void Awake()
+    {
+        Instance = this;
+    }
 
     public override void OnStartServer()
     {
         base.OnStartServer();
         int playerCount = NetworkServer.connections.Count;
+        if (playerCount == 0) playerCount = 1;
         maxXP = baseMaxXP * playerCount;
         currentXP = 0;
-    }
-
-    void OnXPChanged(int _, int __)
-    {
-        if (xpSlider != null)
-        {
-            xpSlider.maxValue = maxXP;
-            xpSlider.value = currentXP;
-        }
     }
 
     [Server]
@@ -49,38 +53,68 @@ public class ExpManager : NetworkBehaviour
             maxXP += baseMaxXP;
 
             Shuffle(allUpgrades);
-            currentUpgrades = allUpgrades.GetRange(0, 3);
+            currentUpgrades = allUpgrades.Take(3).ToList();
 
-            playerChoices.Clear();
             isPaused = true;
-
             RpcPauseGame();
-            RpcShowUpgradeUI(currentUpgrades.ToArray());
+            RpcShowUpgradeUI(currentUpgrades);
+        }
+    }
+
+    void OnXPChanged(int _, int __)
+    {
+        if (xpSlider != null)
+        {
+            xpSlider.maxValue = maxXP;
+            xpSlider.value = currentXP;
+        }
+    }
+
+    void OnHostUpgradeChanged(string _, string newValue)
+    {
+        Debug.Log($"[Client] Host selected: {newValue}");
+    }
+
+    public void Upgrade(string upgrade)
+    {
+        Debug.Log($"[Upgrade Applied] {upgrade}");
+    }
+
+    void Shuffle<T>(List<T> list)
+    {
+        System.Random rng = new();
+        for (int i = list.Count - 1; i > 0; i--)
+        {
+            int j = rng.Next(i + 1);
+            (list[i], list[j]) = (list[j], list[i]);
         }
     }
 
     [ClientRpc]
-    void RpcPauseGame() => Time.timeScale = 0f;
-
-    [ClientRpc]
-    void RpcResumeGame() {
-        Time.timeScale = 1f;
-        upgradesUI.SetActive(false); // <--- ВАЖНО!
-
+    void RpcPauseGame()
+    {
+        Time.timeScale = 0f;
     }
 
     [ClientRpc]
-    void RpcShowUpgradeUI(string[] upgrades)
+    void RpcResumeGame()
+    {
+        Time.timeScale = 1f;
+        upgradesUI.SetActive(false);
+        hostChoiceText.text = "";
+    }
+
+    [ClientRpc]
+    void RpcShowUpgradeUI(List<string> upgrades)
     {
         upgradesUI.SetActive(true);
-
         for (int i = 0; i < upgradesUI.transform.childCount; i++)
         {
             var button = upgradesUI.transform.GetChild(i).GetComponent<UpgradeButton>();
-            if (i < upgrades.Length)
+            if (i < upgrades.Count)
             {
-                button.gameObject.SetActive(true);
                 button.Setup(upgrades[i]);
+                button.gameObject.SetActive(true);
             }
             else
             {
@@ -90,54 +124,93 @@ public class ExpManager : NetworkBehaviour
     }
 
     [ClientRpc]
-    public void RpcHighlightSelection(string upgrade, uint netId)
+    void RpcUpdateSelections(uint playerNetId, string upgrade)
     {
-        foreach (var btn in upgradesUI.GetComponentsInChildren<UpgradeButton>())
+        foreach (var button in upgradesUI.GetComponentsInChildren<UpgradeButton>())
         {
-            if (btn.IsUpgrade(upgrade))
-                btn.Highlight(netId);
+            if (button.UpgradeName == upgrade)
+                button.HighlightIfOther(playerNetId);
+        }
+    }
+
+    [ClientRpc]
+    void RpcUpdateTimerText(string text)
+    {
+        if (hostChoiceText != null)
+        {
+            hostChoiceText.text = text;
         }
     }
 
     [Command(requiresAuthority = false)]
     public void CmdSelectUpgrade(uint playerNetId, string upgrade)
     {
-        playerChoices[playerNetId] = upgrade;
+        selectedUpgrades[playerNetId] = upgrade;
+        RpcUpdateSelections(playerNetId, upgrade);
 
-        RpcHighlightSelection(upgrade, playerNetId);
-
-        if (playerChoices.Count == NetworkServer.connections.Count)
+        // Хост выбрал
+        if (playerNetId == NetworkServer.localConnection.identity.netId)
         {
-            bool allSame = playerChoices.Values.All(val => val == playerChoices.Values.First());
+            Debug.Log($"[Server] Хост выбрал: {upgrade}");
+            hostSelectedUpgrade = upgrade;
+            countdownStartTime = NetworkTime.time;
+            countdownActive = true;
+        }
 
-            if (allSame)
-            {
-                RpcResumeGame();
-                upgradesUI.SetActive(false);
+        CheckConsensus();
+    }
 
-                Upgrade(playerChoices.Values.First());
-            }
-            else
-            {
-                // mismatch — just wait for re-selection or retry
-                // could add UI feedback
-            }
+    void CheckConsensus()
+    {
+        if (AllPlayersSelectedSameUpgrade(out string sameUpgrade))
+        {
+            Debug.Log($"[Server] Все игроки выбрали {sameUpgrade}. Применяем!");
+            ApplyUpgrade(sameUpgrade);
         }
     }
 
-    void Upgrade(string upgrade)
+    bool AllPlayersSelectedSameUpgrade(out string upgrade)
     {
-        Debug.Log($"All players chose upgrade: {upgrade}");
-        // Применить выбранный апгрейд всем или по желанию
+        upgrade = null;
+        if (selectedUpgrades.Count < NetworkServer.connections.Count)
+            return false;
+
+        var distinct = selectedUpgrades.Values.Distinct().ToList();
+        if (distinct.Count == 1)
+        {
+            upgrade = distinct[0];
+            return true;
+        }
+
+        return false;
     }
 
-    void Shuffle<T>(List<T> list)
+    [ServerCallback]
+    void Update()
     {
-        System.Random rng = new System.Random();
-        for (int i = list.Count - 1; i > 0; i--)
+        if (!countdownActive || Time.timeScale != 0f) return;
+
+        double elapsed = NetworkTime.time - countdownStartTime;
+        double remaining = countdownDuration - elapsed;
+
+        if (remaining <= 0)
         {
-            int j = rng.Next(i + 1);
-            (list[i], list[j]) = (list[j], list[i]);
+            Debug.Log($"[Server] Время вышло! Автовыбор: {hostSelectedUpgrade}");
+            ApplyUpgrade(hostSelectedUpgrade);
+            countdownActive = false;
         }
+        else
+        {
+            RpcUpdateTimerText($"Хост выбрал: {hostSelectedUpgrade} (автовыбор через {Mathf.CeilToInt((float)remaining)} сек)");
+        }
+    }
+
+    void ApplyUpgrade(string upgrade)
+    {
+        Debug.Log($"[Server] Применяем апгрейд: {upgrade}");
+        RpcResumeGame();
+        Upgrade(upgrade);
+        selectedUpgrades.Clear();
+        countdownActive = false;
     }
 }

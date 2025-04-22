@@ -2,79 +2,47 @@ using UnityEngine;
 using UnityEngine.UI;
 using Mirror;
 using System.Collections.Generic;
-
+using System.Linq;
 public class UpgradeButton : MonoBehaviour
 {
-    private string upgradeName;
-    private static Dictionary<uint, UpgradeButton> selectedButtons = new(); // какой игрок что выбрал
-    private static List<UpgradeButton> allButtons = new();
-
-    private HashSet<uint> selectedBy = new();
-    private Image image;
-
-    void Awake()
-    {
-        allButtons.Add(this);
-        image = GetComponent<Image>();
-    }
-
-    void OnDestroy()
-    {
-        allButtons.Remove(this);
-    }
+    public string UpgradeName { get; private set; }
+    private string myUpgrade;
+    private bool selected = false;
 
     public void Setup(string upgrade)
     {
-        upgradeName = upgrade;
-        selectedBy.Clear();
-        UpdateColor();
+        myUpgrade = upgrade;
+        UpgradeName = upgrade;
+        selected = false;
         GetComponentInChildren<Text>().text = upgrade;
+        GetComponent<Image>().color = Color.white;
+        gameObject.SetActive(true);
     }
 
     public void Upgrade()
     {
+        if (selected) return;
+        ResetOthers();
+        selected = true;
+        GetComponent<Image>().color = Color.green;
         uint myNetId = NetworkClient.connection.identity.netId;
-
-        // если уже выбрана другая кнопка, сбросим её
-        if (selectedButtons.TryGetValue(myNetId, out var oldBtn) && oldBtn != this)
-        {
-            oldBtn.selectedBy.Remove(myNetId);
-            oldBtn.UpdateColor();
-        }
-
-        selectedBy.Add(myNetId);
-        selectedButtons[myNetId] = this;
-        UpdateColor();
-
-        ExpManager.Instance.CmdSelectUpgrade(myNetId, upgradeName);
+        if (ExpManager.Instance != null) ExpManager.Instance.CmdSelectUpgrade(myNetId, myUpgrade);
     }
 
-    public void Highlight(uint netId)
+    public void HighlightIfOther(uint netId)
     {
-        // сброс всех других
-        foreach (var btn in allButtons)
+        if (!selected) GetComponent<Image>().color = Color.yellow;
+    }
+
+    private void ResetOthers()
+    {
+        foreach (var b in transform.parent.GetComponentsInChildren<UpgradeButton>())
         {
-            if (btn != this && btn.selectedBy.Contains(netId))
+            if (b != this)
             {
-                btn.selectedBy.Remove(netId);
-                btn.UpdateColor();
+                b.selected = false;
+                b.GetComponent<Image>().color = Color.white;
             }
         }
-
-        selectedBy.Add(netId);
-        selectedButtons[netId] = this;
-        UpdateColor();
-    }
-
-    public bool IsUpgrade(string name) => upgradeName == name;
-
-    private void UpdateColor()
-    {
-        if (selectedBy.Count == 0)
-            image.color = Color.white;
-        else if (selectedBy.Count == 1)
-            image.color = Color.green;
-        else
-            image.color = Color.yellow; // несколько игроков выбрали одну кнопку
     }
 }
