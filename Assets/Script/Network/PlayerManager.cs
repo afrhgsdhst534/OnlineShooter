@@ -7,7 +7,6 @@ public class PlayerManager : NetworkBehaviour
     public static PlayerManager instance;
     public event Action<GameObject> onAdd;
     private readonly List<GameObject> players = new();
-
     void Awake()
     {
         if (instance == null)
@@ -15,7 +14,11 @@ public class PlayerManager : NetworkBehaviour
         else
             Destroy(gameObject);
     }
-
+    [Server]
+    public List<GameObject> GetAllPlayers()
+    {
+            return new List<GameObject>(players);
+    }
     [Server]
     public void AddPlayer(GameObject player)
     {
@@ -25,14 +28,12 @@ public class PlayerManager : NetworkBehaviour
             onAdd?.Invoke(player);
         }
     }
-
     [Server]
     public void RemovePlayer(GameObject player)
     {
         if (players.Contains(player))
             players.Remove(player);
     }
-
     [Server]
     public GameObject RandomPlayer()
     {

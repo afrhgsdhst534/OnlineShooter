@@ -734,14 +734,14 @@ MonoBehaviour:
   m_TargetGraphic: {fileID: 902715809}
   m_TextComponent: {fileID: 356777084}
   m_Placeholder: {fileID: 1993021573}
-  m_ContentType: 0
+  m_ContentType: 2
   m_InputType: 0
   m_AsteriskChar: 42
-  m_KeyboardType: 0
+  m_KeyboardType: 4
   m_LineType: 0
   m_HideMobileInput: 0
-  m_CharacterValidation: 0
-  m_CharacterLimit: 0
+  m_CharacterValidation: 1
+  m_CharacterLimit: 5
   m_OnSubmit:
     m_PersistentCalls:
       m_Calls: []
@@ -1065,6 +1065,7 @@ MonoBehaviour:
   - {fileID: 8289913353228914802, guid: 36ffb15488ebb384c87d3bf270d61f5a, type: 3}
   - {fileID: 6397472354976914149, guid: 1f8ff892e36cccd499a25a03b39b3e4b, type: 3}
   - {fileID: 7220024969972562815, guid: 591a4704fc987df4585b81b046780e24, type: 3}
+  - {fileID: 3199881526651638265, guid: 5fbebaf3539a4d5458647e4636a85af6, type: 3}
   exceptionsDisconnect: 1
   snapshotSettings:
     bufferTimeMultiplier: 2

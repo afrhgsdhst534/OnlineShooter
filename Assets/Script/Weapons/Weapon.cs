@@ -1,10 +1,7 @@
 using UnityEngine;
-using Mirror;
-
 public abstract class Weapon : MonoBehaviour
 {
-    public int reloadTime;
-    public int force;
-    public float speed;
+    public int force = 5;
+    public float speed = 10f;
     public abstract void Attack();
 }

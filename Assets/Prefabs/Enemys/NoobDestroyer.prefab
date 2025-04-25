@@ -273,9 +273,8 @@ MonoBehaviour:
   syncDirection: 0
   syncMode: 0
   syncInterval: 0
-  expReward: 10
-  maxHealth: 1
-  curHealth: 0
+  currentHealth: 0
+  exp: 10
 --- !u!1001 &705324922626978065
 PrefabInstance:
   m_ObjectHideFlags: 0

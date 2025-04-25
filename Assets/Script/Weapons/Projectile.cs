@@ -3,7 +3,7 @@ using Mirror;
 public class Projectile : NetworkBehaviour
 {
     private float speed;
-    private GameObject owner; // объект, выпустивший пулю
+    private GameObject owner; 
     private Vector3 direction;
     private int damage;
     [SyncVar] private Vector3 syncedPosition;

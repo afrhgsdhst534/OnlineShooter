@@ -186,6 +186,7 @@ GameObject:
   - component: {fileID: -4963416913952636997}
   - component: {fileID: 3478228640298596742}
   - component: {fileID: 7927883930952505170}
+  - component: {fileID: -3318411050468644133}
   m_Layer: 0
   m_Name: Space_Transporter
   m_TagString: Player
@@ -291,7 +292,9 @@ MonoBehaviour:
   syncDirection: 0
   syncMode: 0
   syncInterval: 0
-  playerManager: {fileID: 0}
+  maxHealth: 100
+  attack: 10
+  reloadTime: 1000
 --- !u!82 &5353219765957420922
 AudioSource:
   m_ObjectHideFlags: 0
@@ -475,9 +478,8 @@ MonoBehaviour:
   syncDirection: 0
   syncMode: 0
   syncInterval: 0
-  expReward: 10
-  maxHealth: 100
-  curHealth: 0
+  currentHealth: 0
+  exp: 0
 --- !u!114 &3478228640298596742
 MonoBehaviour:
   m_ObjectHideFlags: 0
@@ -509,7 +511,20 @@ MonoBehaviour:
   syncDirection: 0
   syncMode: 0
   syncInterval: 0
+  reloadTime: 1000
   weapon: {fileID: 0}
+--- !u!114 &-3318411050468644133
+MonoBehaviour:
+  m_ObjectHideFlags: 0
+  m_CorrespondingSourceObject: {fileID: 0}
+  m_PrefabInstance: {fileID: 0}
+  m_PrefabAsset: {fileID: 0}
+  m_GameObject: {fileID: 3199881526651638265}
+  m_Enabled: 1
+  m_EditorHideFlags: 0
+  m_Script: {fileID: 11500000, guid: f1e9b35e319e7e044bb2e77151e16399, type: 3}
+  m_Name: 
+  m_EditorClassIdentifier: 
 --- !u!1 &4364825399805256782
 GameObject:
   m_ObjectHideFlags: 0

@@ -7,8 +7,7 @@ public class LazerProjectile : Weapon
     {
         Projectile proj = Instantiate(projectilePrefab, transform.position, transform.rotation);
         GameObject owner = transform.parent.gameObject;
-        // Передача данных в снаряд
-        proj.SetData(speed,  force,owner); // ← убедись, что `speed` НЕ 0
+        proj.SetData(speed,  force,owner);
         proj.Initialize(transform.forward);
         NetworkServer.Spawn(proj.gameObject);
     }

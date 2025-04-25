@@ -2,36 +2,48 @@ using UnityEngine;
 using UnityEngine.UI;
 using Mirror;
 using kcp2k;
-using System;
 public class MainMenuUI : MonoBehaviour
 {
     public InputField portField;
     public InputField ipField;
-    public void Start()
+    void Start()
     {
+#if UNITY_EDITOR || UNITY_STANDALONE
         string localIP = GetLocalIPAddress();
         if (!string.IsNullOrEmpty(localIP))
         {
             Debug.Log("Локальный IPv4-адрес: " + localIP);
+            ipField.text = localIP;
         }
         else
         {
             Debug.Log("Не удалось найти локальный IPv4-адрес.");
         }
-        ipField.text = localIP;
+#else
+        ipField.text = "";
+#endif
     }
     public void StartHost()
     {
-        NetworkManager.singleton.GetComponent<KcpTransport>().port = Convert.ToUInt16(portField.text);
+        ushort port = TryParsePort();
+        NetworkManager.singleton.GetComponent<KcpTransport>().port = port;
         NetworkManager.singleton.networkAddress = ipField.text;
         NetworkManager.singleton.StartHost();
     }
     public void StartClient()
     {
-        NetworkManager.singleton.GetComponent<KcpTransport>().port = Convert.ToUInt16(portField.text);
+        ushort port = TryParsePort();
+        NetworkManager.singleton.GetComponent<KcpTransport>().port = port;
         NetworkManager.singleton.networkAddress = ipField.text;
         NetworkManager.singleton.StartClient();
     }
+    private ushort TryParsePort()
+    {
+        ushort port = 7777;
+        ushort.TryParse(portField.text, out port);
+        return port;
+    }
+#if UNITY_EDITOR || UNITY_STANDALONE
     string GetLocalIPAddress()
     {
         string localIP = string.Empty;
@@ -56,4 +68,5 @@ public class MainMenuUI : MonoBehaviour
         }
         return localIP;
     }
+#endif
 }
